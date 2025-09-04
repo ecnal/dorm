@@ -30,7 +30,7 @@ module Dorm
             when Symbol
               "#{table_name}.#{field}"
             when String
-              field.include?('.') ? field : "#{table_name}.#{field}"
+              field.include?(".") ? field : "#{table_name}.#{field}"
             else
               field.to_s
             end
@@ -92,16 +92,16 @@ module Dorm
     def group_by(*fields)
       clone.tap do |query|
         formatted_fields = fields.map { |f| format_field(f) }
-        query.instance_variable_set(:@group_by_fields, 
-          query.instance_variable_get(:@group_by_fields) + formatted_fields)
+        query.instance_variable_set(:@group_by_fields,
+                                    query.instance_variable_get(:@group_by_fields) + formatted_fields)
       end
     end
 
     def having(condition, *params)
       clone.tap do |query|
         query.instance_variable_get(:@having_conditions) << [condition, params]
-        query.instance_variable_set(:@param_counter, 
-          query.instance_variable_get(:@param_counter) + params.length)
+        query.instance_variable_set(:@param_counter,
+                                    query.instance_variable_get(:@param_counter) + params.length)
       end
     end
 
@@ -111,7 +111,7 @@ module Dorm
         formatted_fields = fields.map do |field|
           case field
           when Hash
-            field.map { |f, direction| "#{format_field(f)} #{direction.to_s.upcase}" }.join(', ')
+            field.map { |f, direction| "#{format_field(f)} #{direction.to_s.upcase}" }.join(", ")
           else
             format_field(field)
           end
@@ -164,7 +164,7 @@ module Dorm
         .limit(nil)
         .offset(nil)
         .execute
-        .map { |results| results.first&.[]('count')&.to_i || 0 }
+        .map { |results| results.first&.[]("count")&.to_i || 0 }
     end
 
     def exists?
@@ -178,7 +178,7 @@ module Dorm
       Result.try do
         sql, params = build_sql_with_params
         result = Database.query(sql, params)
-        
+
         case result
         when ->(r) { r.respond_to?(:map) }
           result.map { |row| row_to_data(row) }
@@ -192,25 +192,25 @@ module Dorm
     def sum(field)
       select_raw("SUM(#{format_field(field)}) as sum")
         .execute
-        .map { |results| results.first&.[]('sum')&.to_f || 0 }
+        .map { |results| results.first&.[]("sum")&.to_f || 0 }
     end
 
     def avg(field)
       select_raw("AVG(#{format_field(field)}) as avg")
         .execute
-        .map { |results| results.first&.[]('avg')&.to_f || 0 }
+        .map { |results| results.first&.[]("avg")&.to_f || 0 }
     end
 
     def max(field)
       select_raw("MAX(#{format_field(field)}) as max")
         .execute
-        .map { |results| results.first&.[]('max') }
+        .map { |results| results.first&.[]("max") }
     end
 
     def min(field)
       select_raw("MIN(#{format_field(field)}) as min")
         .execute
-        .map { |results| results.first&.[]('min') }
+        .map { |results| results.first&.[]("min") }
     end
 
     private
@@ -227,12 +227,12 @@ module Dorm
           # Auto-generate join condition from kwargs
           conditions = kwargs.map do |local_field, foreign_field|
             "#{table_name}.#{local_field} = #{table}.#{foreign_field}"
-          end.join(' AND ')
+          end.join(" AND ")
           join_clause = "#{join_type} #{table} ON #{conditions}"
         else
           raise ArgumentError, "Join requires either condition or field mapping"
         end
-        
+
         query.instance_variable_get(:@joins) << join_clause
       end
     end
@@ -245,7 +245,7 @@ module Dorm
     def add_hash_conditions(hash)
       hash.each do |field, value|
         if value.is_a?(Array)
-          placeholders = value.map { next_placeholder }.join(', ')
+          placeholders = value.map { next_placeholder }.join(", ")
           add_where_condition("#{format_field(field)} IN (#{placeholders})", value)
         elsif value.is_a?(Range)
           add_where_condition(
@@ -265,7 +265,7 @@ module Dorm
       when Symbol
         "#{table_name}.#{field}"
       when String
-        field.include?('.') ? field : "#{table_name}.#{field}"
+        field.include?(".") ? field : "#{table_name}.#{field}"
       else
         field.to_s
       end
@@ -284,28 +284,28 @@ module Dorm
 
     def build_sql
       parts = []
-      
-      parts << "SELECT #{@select_fields.join(', ')}"
+
+      parts << "SELECT #{@select_fields.join(", ")}"
       parts << "FROM #{table_name}"
       parts.concat(@joins) if @joins.any?
-      
+
       if @where_conditions.any?
-        where_clause = @where_conditions.map { |condition, _| condition }.join(' AND ')
+        where_clause = @where_conditions.map { |condition, _| condition }.join(" AND ")
         parts << "WHERE #{where_clause}"
       end
-      
-      parts << "GROUP BY #{@group_by_fields.join(', ')}" if @group_by_fields.any?
-      
+
+      parts << "GROUP BY #{@group_by_fields.join(", ")}" if @group_by_fields.any?
+
       if @having_conditions.any?
-        having_clause = @having_conditions.map { |condition, _| condition }.join(' AND ')
+        having_clause = @having_conditions.map { |condition, _| condition }.join(" AND ")
         parts << "HAVING #{having_clause}"
       end
-      
-      parts << "ORDER BY #{@order_by_fields.join(', ')}" if @order_by_fields.any?
+
+      parts << "ORDER BY #{@order_by_fields.join(", ")}" if @order_by_fields.any?
       parts << "LIMIT #{@limit_value}" if @limit_value
       parts << "OFFSET #{@offset_value}" if @offset_value
-      
-      parts.join(' ')
+
+      parts.join(" ")
     end
 
     def collect_params
@@ -317,7 +317,7 @@ module Dorm
 
     def row_to_data(row)
       return row unless @data_class && @select_fields == ["#{table_name}.*"]
-      
+
       attrs = {}
       @data_class.members.each do |col|
         attrs[col] = deserialize_value(col, row[col.to_s])
@@ -327,7 +327,7 @@ module Dorm
 
     def deserialize_value(column, value)
       return nil if value.nil?
-      
+
       case column
       when :id, /.*_id$/
         value.to_i
@@ -395,7 +395,7 @@ module Dorm
       end
 
       def in(values)
-        placeholders = values.map { |v| @dsl.add_param(v) }.join(', ')
+        placeholders = values.map { |v| @dsl.add_param(v) }.join(", ")
         Condition.new("#{@table_name}.#{@field} IN (#{placeholders})", @dsl.params.dup)
       end
 

@@ -1,34 +1,30 @@
 # Connection Pool Usage Examples
 
-require 'dorm'
+require "dorm"
 
 # Configure with connection pooling
-Dorm.configure do |config|
-  config.configure(
-    adapter: :postgresql,
-    host: 'localhost',
-    dbname: 'myapp_production',
-    user: 'postgres',
-    password: 'secret',
+Dorm.configure(
+  adapter: :postgresql,
+  host: "localhost",
+  dbname: "myapp_production",
+  user: "postgres",
+  password: "secret",
 
-    # Pool configuration
-    pool_size: 10,              # Maximum connections in pool
-    pool_timeout: 5,            # Seconds to wait for connection
-    max_connection_age: 3600,   # 1 hour - connections older than this get reaped
-    max_idle_time: 300,         # 5 minutes - idle connections get reaped
-    reap_frequency: 60          # 1 minute - how often to check for stale connections
-  )
-end
+  # Pool configuration
+  pool_size: 10,              # Maximum connections in pool
+  pool_timeout: 5,            # Seconds to wait for connection
+  max_connection_age: 3600,   # 1 hour - connections older than this get reaped
+  max_idle_time: 300,         # 5 minutes - idle connections get reaped
+  reap_frequency: 60          # 1 minute - how often to check for stale connections
+)
 
 # For SQLite3 with pooling (useful for testing)
-Dorm.configure do |config|
-  config.configure(
-    adapter: :sqlite3,
-    database: 'myapp.db',
-    pool_size: 3, # SQLite doesn't need many connections
-    pool_timeout: 2
-  )
-end
+Dorm.configure(
+  adapter: :sqlite3,
+  database: "myapp.db",
+  pool_size: 3, # SQLite doesn't need many connections
+  pool_timeout: 2
+)
 
 # Usage is exactly the same - pooling is transparent
 User = Data.define(:id, :name, :email, :created_at, :updated_at)
@@ -38,10 +34,10 @@ Users = Dorm.repository_for(User, validations: {
                             })
 
 # All operations automatically use the pool
-user_result = Users.create(name: 'Alice', email: 'alice@example.com')
+user_result = Users.create(name: "Alice", email: "alice@example.com")
 
 if user_result.success?
-  puts 'Created user with pooled connection!'
+  puts "Created user with pooled connection!"
 
   # Multiple concurrent operations will use different connections from pool
   threads = 10.times.map do |i|

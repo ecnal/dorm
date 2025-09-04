@@ -14,11 +14,6 @@ module Dorm
   class ValidationError < Error; end
   class RecordNotFoundError < Error; end
 
-  # module_function
-
-  # def configure
-  #   yield(Database) if block_given?
-  # end
   def self.configure(**options)
     Database.configure(**options)
   end
