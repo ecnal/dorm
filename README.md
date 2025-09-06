@@ -37,14 +37,12 @@ $ gem install dorm
 ```ruby
 require 'dorm'
 
-Dorm.configure do |config|
-  config.configure(
-    adapter: :postgresql,
-    host: 'localhost',
-    dbname: 'myapp_development',
-    user: 'postgres'
-  )
-end
+Dorm.configure(
+  adapter: :postgresql,
+  host: 'localhost',
+  dbname: 'myapp_development',
+  user: 'postgres'
+)
 ```
 
 ### 2. Define Your Data Structures
@@ -57,7 +55,7 @@ Post = Data.define(:id, :title, :body, :user_id, :created_at, :updated_at)
 ### 3. Create Repositories
 
 ```ruby
-Users = Dorm.repository_for(User, 
+Users = Dorm.repository_for(User,
   validations: {
     name: { required: true, length: 1..100 },
     email: { required: true, format: /@/ }
@@ -118,7 +116,7 @@ Every repository automatically gets these methods:
 - `find(id)` - Find record by ID
 - `find_all` - Get all records
 - `create(attrs)` - Create new record
-- `update(record)` - Update existing record  
+- `update(record)` - Update existing record
 - `save(record)` - Create or update (based on presence of ID)
 - `delete(record)` - Delete record
 
@@ -168,16 +166,16 @@ Support for common validation patterns:
 ```ruby
 Users = Dorm.repository_for(User,
   validations: {
-    name: { 
-      required: true, 
-      length: 1..100 
+    name: {
+      required: true,
+      length: 1..100
     },
-    email: { 
-      required: true, 
-      format: /@/ 
+    email: {
+      required: true,
+      format: /@/
     },
-    age: { 
-      range: 0..150 
+    age: {
+      range: 0..150
     }
   }
 )
@@ -187,25 +185,21 @@ Users = Dorm.repository_for(User,
 
 ### PostgreSQL
 ```ruby
-Dorm.configure do |config|
-  config.configure(
-    adapter: :postgresql,
-    host: 'localhost',
-    dbname: 'myapp',
-    user: 'postgres',
-    password: 'secret'
-  )
-end
+Dorm.configure(
+  adapter: :postgresql,
+  host: 'localhost',
+  dbname: 'myapp',
+  user: 'postgres',
+  password: 'secret'
+)
 ```
 
 ### SQLite3
 ```ruby
-Dorm.configure do |config|
-  config.configure(
-    adapter: :sqlite3,
-    database: 'myapp.db'
-  )
-end
+Dorm.configure(
+  adapter: :sqlite3,
+  database: 'myapp.db'
+)
 ```
 
 ## Philosophy
