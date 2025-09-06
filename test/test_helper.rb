@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
-require 'minitest/reporters'
-require 'fileutils'
-require_relative '../lib/dorm'
+require "simplecov"
+SimpleCov.start do
+  add_filter "/test/"
+end
+
+require "minitest/autorun"
+require "minitest/reporters"
+require "fileutils"
+require_relative "../lib/dorm"
 
 # Use spec reporter for better output
 Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new]
@@ -11,7 +16,7 @@ Minitest::Reporters.use! [Minitest::Reporters::SpecReporter.new]
 class DormTestCase < Minitest::Test
   def setup
     # Use a temporary file database instead of :memory:
-    @db_file = "test_#{Process.pid}_#{Time.now.to_f.to_s.gsub('.', '')}.db"
+    @db_file = "test_#{Process.pid}_#{Time.now.to_f.to_s.gsub(".", "")}.db"
 
     # Setup file-based SQLite for tests
     Dorm::Database.configure(
@@ -75,12 +80,12 @@ class DormTestCase < Minitest::Test
     puts "Database adapter: #{begin
       Dorm::Database.adapter
     rescue StandardError
-      'not configured'
+      "not configured"
     end}"
     puts "Pool configured: #{begin
       !Dorm::Database.pool.nil?
     rescue StandardError
-      'no pool'
+      "no pool"
     end}"
     raise
   end
@@ -117,10 +122,10 @@ Comments = Dorm.repository_for(Comment,
 module TestDataHelpers
   def create_user(attrs = {})
     # Generate unique email to avoid conflicts
-    email = attrs[:email] || "user_#{Time.now.to_f.to_s.gsub('.', '')}@example.com"
+    email = attrs[:email] || "user_#{Time.now.to_f.to_s.gsub(".", "")}@example.com"
 
     default_attrs = {
-      name: 'John Doe',
+      name: "John Doe",
       email: email,
       age: 30
     }
@@ -135,8 +140,8 @@ module TestDataHelpers
 
   def create_post(user_id, attrs = {})
     default_attrs = {
-      title: 'Test Post',
-      body: 'This is a test post',
+      title: "Test Post",
+      body: "This is a test post",
       user_id: user_id,
       published: true
     }
@@ -150,7 +155,7 @@ module TestDataHelpers
 
   def create_comment(post_id, user_id, attrs = {})
     default_attrs = {
-      content: 'This is a test comment',
+      content: "This is a test comment",
       post_id: post_id,
       user_id: user_id
     }

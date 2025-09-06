@@ -53,7 +53,9 @@ module Dorm
           # DSL block: where { name.eq("Alice").and(age.gt(18)) }
           dsl = WhereDSL.new(table_name, query.instance_variable_get(:@param_counter))
           condition = dsl.instance_eval(&block)
-          query.add_where_condition(condition.to_sql, condition.params)
+          query.instance_variable_get(:@where_conditions) << [condition.to_sql, condition.params]
+          query.instance_variable_set(:@param_counter,
+                                      query.instance_variable_get(:@param_counter) + condition.params.length)
         elsif conditions.is_a?(Hash) || !kwargs.empty?
           # Hash conditions: where(name: "Alice", age: 25)
           hash_conditions = conditions.is_a?(Hash) ? conditions : kwargs
@@ -213,6 +215,27 @@ module Dorm
         .map { |results| results.first&.[]("min") }
     end
 
+    def add_where_condition(condition, params)
+      @where_conditions << [condition, params]
+    end
+
+    def add_hash_conditions(hash)
+      hash.each do |field, value|
+        if value.is_a?(Array)
+          placeholders = value.map { next_placeholder }.join(", ")
+          @where_conditions << ["#{format_field(field)} IN (#{placeholders})", value]
+        elsif value.is_a?(Range)
+          condition = "#{format_field(field)} BETWEEN #{next_placeholder} AND #{next_placeholder}"
+          @where_conditions << [condition, [value.begin, value.end]]
+        elsif value.nil?
+          @where_conditions << ["#{format_field(field)} IS NULL", []]
+        else
+          condition = "#{format_field(field)} = #{next_placeholder}"
+          @where_conditions << [condition, [value]]
+        end
+      end
+    end
+
     private
 
     def clone
@@ -234,29 +257,6 @@ module Dorm
         end
 
         query.instance_variable_get(:@joins) << join_clause
-      end
-    end
-
-    def add_where_condition(condition, params)
-      @where_conditions << [condition, params]
-      @param_counter += params.length
-    end
-
-    def add_hash_conditions(hash)
-      hash.each do |field, value|
-        if value.is_a?(Array)
-          placeholders = value.map { next_placeholder }.join(", ")
-          add_where_condition("#{format_field(field)} IN (#{placeholders})", value)
-        elsif value.is_a?(Range)
-          add_where_condition(
-            "#{format_field(field)} BETWEEN #{next_placeholder} AND #{next_placeholder}",
-            [value.begin, value.end]
-          )
-        elsif value.nil?
-          add_where_condition("#{format_field(field)} IS NULL", [])
-        else
-          add_where_condition("#{format_field(field)} = #{next_placeholder}", [value])
-        end
       end
     end
 
